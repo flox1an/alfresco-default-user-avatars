@@ -1,17 +1,7 @@
 package de.fmaul.alfresco.avatars;
 
-import java.awt.Color;
-import java.awt.Font;
-import java.awt.FontMetrics;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Serializable;
 import java.util.Map;
-
-import javax.imageio.ImageIO;
 
 import org.alfresco.model.ContentModel;
 import org.alfresco.service.cmr.repository.ChildAssociationRef;
@@ -30,45 +20,29 @@ public class AvatarServiceImpl implements AvatarService {
 
 	private NodeService nodeService;
 	private ContentService contentService;
-	private String colorPalette = "#6E7702,#CCC429,#BBA40E,#F9EA6D,#F8C847,#32444E,#83A2B1,#A6CADB,#C6E8FD,#99BBCD";
-
-	private boolean showInitials = true;
-
-	private boolean blackFontForLightBackgrounds = false;
-
-	public void setNodeService(NodeService nodeService) {
-		this.nodeService = nodeService;
-	}
-
-	public void setContentService(ContentService contentService) {
-		this.contentService = contentService;
-	}
-
-	public void setColorPalette(String colorPalette) {
-		this.colorPalette = colorPalette;
-	}
-
+	private AvatarGenerator avatarGenerator;
+	
 	@Override
 	public NodeRef createDefaultUserAvatar(NodeRef person) {
 
-		String letters = getAvatarInitialsFromProperties(person);
-
-		if (letters != null) {
-
-			String name = DEFAULT_AVATAR_NAME_PREFIX + letters + ".png";
+		if (avatarGenerator.avatarCanBeGenerated(person)) {
+			
+			String userName = (String) nodeService.getProperty(person, ContentModel.PROP_USERNAME);
+			
+			String name = DEFAULT_AVATAR_NAME_PREFIX + userName + ".png";
 			QName assocQName = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, QName.createValidLocalName(name));
 
 			ChildAssociationRef avatarNodeAssoc = nodeService.createNode(person, ContentModel.ASSOC_PREFERENCE_IMAGE, assocQName,
 					ContentModel.TYPE_CONTENT);
-
+		
 			NodeRef avatarNode = avatarNodeAssoc.getChildRef();
 			nodeService.setProperty(avatarNode, ContentModel.PROP_NAME, name);
-
+		
 			ContentWriter writer = contentService.getWriter(avatarNode, ContentModel.PROP_CONTENT, true);
 			writer.guessMimetype(name);
-
-			createAvatar(letters, writer.getContentOutputStream());
-
+			
+			avatarGenerator.createAvatar(person, writer.getContentOutputStream());
+		
 			nodeService.createAssociation(person, avatarNode, ContentModel.ASSOC_AVATAR);
 			
 			return avatarNode;
@@ -76,127 +50,21 @@ public class AvatarServiceImpl implements AvatarService {
 		return null;
 	}
 
-	private String getAvatarInitialsFromProperties(NodeRef person) {
-		String personFirstName = (String) nodeService.getProperty(person, ContentModel.PROP_FIRSTNAME);
-		String personLastName = (String) nodeService.getProperty(person, ContentModel.PROP_LASTNAME);
-
-		if (personFirstName != null && personFirstName.length() > 0) {
-			String letters = personFirstName.substring(0, 1);
-			if (showInitials && personLastName != null && personLastName.length() > 0) {
-				letters += personLastName.substring(0, 1);
-			}
-			return letters;
-		}
-		return null;
-	}
-
-	/**
-	 * Tests if an avatar image update is needed when the properties of the
-	 * person have changed. Depending on the showInitials setting a chnage in
-	 * the firstname or lastname is triggering an update.
-	 * 
-	 * @see de.fmaul.alfresco.avatars.AvatarService#avatarUpdateNeeded(java.util.Map,
-	 *      java.util.Map)
-	 **/
+	@Override
 	public boolean avatarUpdateNeeded(Map<QName, Serializable> before, Map<QName, Serializable> after) {
-		String firstNameBefore = (String) before.get(ContentModel.PROP_FIRSTNAME);
-		String firstNameAfter = (String) after.get(ContentModel.PROP_FIRSTNAME);
-		String lastNameBefore = (String) before.get(ContentModel.PROP_LASTNAME);
-		String lastNameAfter = (String) after.get(ContentModel.PROP_LASTNAME);
-
-		if (showInitials) {
-			return (firstNameBefore != null && firstNameAfter != null && !firstNameBefore.equals(firstNameAfter))
-					|| (lastNameBefore != null && lastNameAfter != null && !lastNameBefore.equals(lastNameAfter));
-		} else {
-			// Only show first name letter
-			return (firstNameBefore != null && firstNameAfter != null && !firstNameBefore.equals(firstNameAfter));
-		}
+		return avatarGenerator.avatarUpdateNeeded(before, after);
+	}
+	
+	public void setNodeService(NodeService nodeService) {
+		this.nodeService = nodeService;
 	}
 
-	/**
-	 * Selects a random color from the configured color palette. Which is a
-	 * String of comma speparated html color codes.
-	 * 
-	 * @return A HTML color code for the selected random Color.
-	 */
-	private String getRandomColorFromPalette() {
-		String[] palette = colorPalette.split(",");
-		int paletteIndex = (int) (Math.random() * palette.length);
-		return palette[paletteIndex];
+	public void setContentService(ContentService contentService) {
+		this.contentService = contentService;
+	}
+	
+	public void setAvatarGenerator(AvatarGenerator avatarGenerator) {
+		this.avatarGenerator = avatarGenerator;
 	}
 
-	/**
-	 * Renders an avatar image and writes it as PNG into the outputStream.
-	 * @param letters
-	 * @param outputStream
-	 */
-	private void createAvatar(String letters, OutputStream outputStream) {
-		Color backgroundColor = Color.decode(getRandomColorFromPalette());
-		Color textColor = Color.white;
-
-		if (blackFontForLightBackgrounds && brightness(backgroundColor) > 180) {
-			textColor = Color.black;
-		}
-		BufferedImage bi = drawAvatar(letters, backgroundColor, textColor);
-
-		try {
-			ImageIO.write(bi, "PNG", outputStream);
-			outputStream.close();
-		} catch (IOException e) {
-			log.error("Error writing avatar image to output stream.", e);
-		}
-
-	}
-
-	/**
-	 * Draws an Avatar image using Graphics2D
-	 * @param letters
-	 * @param backgroundColor
-	 * @param textColor
-	 * @return
-	 */
-	private BufferedImage drawAvatar(String letters, Color backgroundColor, Color textColor) {
-		int width = 64, height = 64;
-
-		BufferedImage bi = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-
-		Graphics2D g = bi.createGraphics();
-
-		g.setPaint(backgroundColor);
-		g.fillRect(0, 0, width, height);
-		g.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-
-		int fontSize = 50;
-		if (showInitials) {
-			fontSize = 30;
-		}
-
-		Font font = new Font("Arial", Font.BOLD, fontSize);
-		g.setFont(font);
-		g.setPaint(textColor);
-		FontMetrics fontMetrics = g.getFontMetrics();
-		int stringWidth = fontMetrics.stringWidth(letters);
-		int stringHeight = fontMetrics.getAscent() + 20;
-		g.drawString(letters, (width - stringWidth) / 2, height / 2 + stringHeight / 4);
-
-		return bi;
-	}
-
-	/**
-	 * Calculates the brightness (average from all three color channels)
-	 * @param color
-	 * @return A double with 0 for black, 255 for white
-	 */
-	private double brightness(Color color) {
-
-		return ((double) color.getBlue() + color.getRed() + color.getGreen()) / 3;
-	}
-
-	public void setShowInitials(boolean showInitials) {
-		this.showInitials = showInitials;
-	}
-
-	public void setBlackFontForLightBackgrounds(boolean blackFontForLightBackgrounds) {
-		this.blackFontForLightBackgrounds = blackFontForLightBackgrounds;
-	}
 }
