@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.fmaul.alfresco</groupId>
     <artifactId>alfresco-default-user-avatars</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
     <name>alfresco-default-user-avatars AMP project</name>
     <packaging>amp</packaging>
     <description>Manages the lifecycle of the alfresco-default-user-avatars AMP (Alfresco Module Package)</description>
@@ -34,7 +34,7 @@
         .    | Could be org.alfresco | org.alfresco.enterprise or your corporate groupId -->
         <alfresco.client.war.groupId>org.alfresco</alfresco.client.war.groupId>
         <!-- Defines the target WAR version to run this amp, only used with the -Pamp-to-war switch -->
-        <alfresco.client.war.version>4.2.c</alfresco.client.war.version>
+        <alfresco.client.war.version>4.2.d</alfresco.client.war.version>
         <!-- This controls which properties will be picked in src/test/properties for embedded run -->
         <env>local</env>
     </properties>
@@ -75,6 +75,7 @@
         	<groupId>org.springframework</groupId>
         	<artifactId>spring-context</artifactId>
         	<version>3.0.6.RELEASE</version>
+        	<scope>provided</scope>
         </dependency>
     </dependencies>
 
