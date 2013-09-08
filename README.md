@@ -1,11 +1,16 @@
 
-Alfrecso component to create default user avatars for Alfresco
+Alfresco component to create default user avatars for Alfresco
 ==============================================================
 
 Author: Florian Maul
 
 This project creates avatar images with the user's initals and a colored background
 for all user who have not defined a custom avatar image.
+
+Download
+--------
+
+See the releases section in Github for AMP downloads: https://github.com/fmaul/alfresco-default-user-avatars/releases
 
 
 Installation
