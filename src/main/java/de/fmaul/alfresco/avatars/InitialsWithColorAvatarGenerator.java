@@ -22,9 +22,9 @@ import org.apache.commons.logging.LogFactory;
 
 public class InitialsWithColorAvatarGenerator implements AvatarGenerator {
 
-	Log log = LogFactory.getLog(InitialsWithColorAvatarGenerator.class);
+	private Log log = LogFactory.getLog(InitialsWithColorAvatarGenerator.class);
 
-	String colorPalette = "#6E7702,#CCC429,#BBA40E,#F9EA6D,#F8C847,#32444E,#83A2B1,#A6CADB,#C6E8FD,#99BBCD";
+	private String colorPalette = "#6E7702,#CCC429,#BBA40E,#F9EA6D,#F8C847,#32444E,#83A2B1,#A6CADB,#C6E8FD,#99BBCD";
 
 	private boolean showInitials = true;
 

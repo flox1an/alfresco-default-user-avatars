@@ -19,7 +19,7 @@
 
 <beans>
 
-	<bean id="de.fmaul.initialsWithColorAvatarGenerator" class="de.fmaul.alfresco.avatars.InitialsWithColorAvatarGenerator">
+	<bean id="de.fmaul.avatarGenerator" class="de.fmaul.alfresco.avatars.InitialsWithColorAvatarGenerator">
 		<property name="nodeService" ref="NodeService"/>
 		<property name="colorPalette" value="${users.default.avatars.palette}"/>
 		<property name="blackFontForLightBackgrounds" value="${users.default.avatars.blackFontForLightBackgrounds}"/>
@@ -29,7 +29,7 @@
 	<bean id="de.fmaul.avatarService" class="de.fmaul.alfresco.avatars.AvatarServiceImpl">
 		<property name="nodeService" ref="NodeService"/>
 		<property name="contentService" ref="ContentService"/>
-		<property name="avatarGenerator" ref="de.fmaul.initialsWithColorAvatarGenerator"/>
+		<property name="avatarGenerator" ref="de.fmaul.avatarGenerator"/>
 	</bean>
 
 	<bean id="de.fmaul.default.user.avatar.behaviour" class="de.fmaul.alfresco.avatars.DefaultPersonAvatarBehaviour" init-method="init">
