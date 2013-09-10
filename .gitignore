@@ -1,2 +1,5 @@
 /bin
 /target
+.idea/
+*.iml
+/alf_data_dev/

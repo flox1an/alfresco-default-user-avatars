@@ -38,7 +38,7 @@ project directory:
 The command builds the alfresco-default-user-avatars-<version>.amp in the 'target' directory within your project.
 
 To hotdeploy to a local alfresco installation you can use the alfresco:install
-command to deploy the Javascript Console directly to a WAR file or an exploded war folder:
+command to deploy the alfresco-default-user-avatars.amp directly to a WAR file or an exploded war folder:
 
     mvn package alfresco:install -Dmaven.alfresco.warLocation=/path/to/tomcat/webapps/alfresco.war
 
