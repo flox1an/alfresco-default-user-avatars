@@ -1,3 +1,5 @@
+[![Build Status](https://buildhive.cloudbees.com/job/fmaul/job/alfresco-default-user-avatars/badge/icon)](https://buildhive.cloudbees.com/job/fmaul/job/alfresco-default-user-avatars/)
+
 
 Alfresco component to create default user avatars for Alfresco
 ==============================================================
