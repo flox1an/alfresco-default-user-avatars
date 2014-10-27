@@ -29,6 +29,7 @@
 	<bean id="de.fmaul.avatarService" class="de.fmaul.alfresco.avatars.AvatarServiceImpl">
 		<property name="nodeService" ref="NodeService"/>
 		<property name="contentService" ref="ContentService"/>
+        <property name="transactionService" ref="transactionService"/>
 		<property name="avatarGenerator" ref="de.fmaul.avatarGenerator"/>
 	</bean>
 

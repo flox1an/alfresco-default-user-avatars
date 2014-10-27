@@ -13,6 +13,12 @@ import org.alfresco.service.namespace.NamespaceService;
 import org.alfresco.service.namespace.QName;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.alfresco.service.transaction.TransactionService;
+import org.alfresco.repo.transaction.AlfrescoTransactionSupport;
+import org.alfresco.repo.transaction.RetryingTransactionHelper;
+import org.alfresco.repo.transaction.AlfrescoTransactionSupport.TxnReadState;
+import org.alfresco.repo.transaction.RetryingTransactionHelper.RetryingTransactionCallback;
+import org.alfresco.repo.security.authentication.AuthenticationUtil;
 
 public class AvatarServiceImpl implements AvatarService {
 
@@ -20,32 +26,59 @@ public class AvatarServiceImpl implements AvatarService {
 
 	private NodeService nodeService;
 	private ContentService contentService;
+    private TransactionService transactionService;
 	private AvatarGenerator avatarGenerator;
 	
 	@Override
-	public NodeRef createDefaultUserAvatar(NodeRef person) {
+	public NodeRef createDefaultUserAvatar(final NodeRef person) {
 
 		if (avatarGenerator.avatarCanBeGenerated(person)) {
-			
-			String userName = (String) nodeService.getProperty(person, ContentModel.PROP_USERNAME);
-			
-			String name = DEFAULT_AVATAR_NAME_PREFIX + userName + ".png";
-			QName assocQName = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, QName.createValidLocalName(name));
 
-			ChildAssociationRef avatarNodeAssoc = nodeService.createNode(person, ContentModel.ASSOC_PREFERENCE_IMAGE, assocQName,
-					ContentModel.TYPE_CONTENT);
-		
-			NodeRef avatarNode = avatarNodeAssoc.getChildRef();
-			nodeService.setProperty(avatarNode, ContentModel.PROP_NAME, name);
-		
-			ContentWriter writer = contentService.getWriter(avatarNode, ContentModel.PROP_CONTENT, true);
-			writer.guessMimetype(name);
-			
-			avatarGenerator.createAvatar(person, writer.getContentOutputStream());
-		
-			nodeService.createAssociation(person, avatarNode, ContentModel.ASSOC_AVATAR);
-			
-			return avatarNode;
+            RetryingTransactionHelper txnHelper = transactionService.getRetryingTransactionHelper();
+            txnHelper.setForceWritable(true);
+            boolean requiresNew = false;
+            if (AlfrescoTransactionSupport.getTransactionReadState() != TxnReadState.TXN_READ_WRITE)
+            {
+                //We can be in a read-only transaction, so force a new transaction
+                requiresNew = true;
+            }
+
+            return txnHelper.doInTransaction(new RetryingTransactionCallback<NodeRef>()
+            {
+
+                @Override
+                public NodeRef execute() throws Throwable
+                {
+                    return AuthenticationUtil.runAs(new AuthenticationUtil.RunAsWork<NodeRef>()
+                    {
+                        public NodeRef doWork() throws Exception
+                        {
+                            String userName = (String) nodeService.getProperty(person, ContentModel.PROP_USERNAME);
+
+                            String name = DEFAULT_AVATAR_NAME_PREFIX + userName + ".png";
+                            QName assocQName = QName.createQName(NamespaceService.CONTENT_MODEL_1_0_URI, QName.createValidLocalName(name));
+
+                            ChildAssociationRef avatarNodeAssoc = nodeService.createNode(person, ContentModel.ASSOC_PREFERENCE_IMAGE, assocQName,
+                                    ContentModel.TYPE_CONTENT);
+
+                            NodeRef avatarNode = avatarNodeAssoc.getChildRef();
+                            nodeService.setProperty(avatarNode, ContentModel.PROP_NAME, name);
+
+                            ContentWriter writer = contentService.getWriter(avatarNode, ContentModel.PROP_CONTENT, true);
+                            writer.guessMimetype(name);
+
+                            avatarGenerator.createAvatar(person, writer.getContentOutputStream());
+
+                            nodeService.createAssociation(person, avatarNode, ContentModel.ASSOC_AVATAR);
+
+                            return avatarNode;
+                        }
+                    }, AuthenticationUtil.getSystemUserName());
+                }
+
+            }, false, requiresNew);
+
+
 		}
 		return null;
 	}
@@ -66,5 +99,10 @@ public class AvatarServiceImpl implements AvatarService {
 	public void setAvatarGenerator(AvatarGenerator avatarGenerator) {
 		this.avatarGenerator = avatarGenerator;
 	}
+
+    public void setTransactionService(TransactionService transactionService)
+    {
+        this.transactionService = transactionService;
+    }
 
 }
