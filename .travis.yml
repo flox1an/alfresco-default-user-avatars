@@ -1,4 +1,4 @@
 language: java
 cache:
   directories:
-  - .m2
+  - $HOME/.m2
