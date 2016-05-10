@@ -3,7 +3,7 @@
       <config evaluator="string-compare" condition="WebFramework">
            <web-framework>
                <autowire>
-                   <mode>development</mode>
+                   <mode>production</mode>
                </autowire>
            </web-framework>
        </config>

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>de.fmaul.alfresco</groupId>
     <artifactId>alfresco-default-user-avatars</artifactId>
-    <version>1.1</version>
+    <version>1.1.1</version>
     <name>alfresco-default-user-avatars Repository AMP project</name>
     <packaging>amp</packaging>
     <description>Default Users Avatar Generator</description>
