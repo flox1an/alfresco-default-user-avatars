@@ -55,7 +55,7 @@
 			<value>${version.schema}</value>
 		</property>
 		<property name="targetSchema">
-			<value>9999</value>
+			<value>99999</value>
 		</property>
 		<property name="avatarService" ref="de.fmaul.avatarService" />
 	</bean>	
