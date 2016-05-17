@@ -1,0 +1,63 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!--
+	Licensed to the Apache Software Foundation (ASF) under one or more
+	contributor license agreements. 
+	The ASF licenses this file to You under the Apache License, Version 2.0
+	(the "License"); you may not use this file except in compliance with
+	the License.  You may obtain a copy of the License at
+	
+	http://www.apache.org/licenses/LICENSE-2.0
+	
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+	
+-->
+<!DOCTYPE beans PUBLIC '-//SPRING//DTD BEAN//EN' 'http://www.springframework.org/dtd/spring-beans.dtd'>
+
+<beans>
+
+	<bean id="de.fmaul.avatarGenerator" class="de.fmaul.alfresco.avatars.InitialsWithColorAvatarGenerator">
+		<property name="nodeService" ref="NodeService"/>
+		<property name="colorPalette" value="${users.default.avatars.palette}"/>
+		<property name="blackFontForLightBackgrounds" value="${users.default.avatars.blackFontForLightBackgrounds}"/>
+		<property name="showInitials" value="${users.default.avatars.showInitials}"/>
+	</bean>
+	
+	<bean id="de.fmaul.avatarService" class="de.fmaul.alfresco.avatars.AvatarServiceImpl">
+		<property name="nodeService" ref="NodeService"/>
+		<property name="contentService" ref="ContentService"/>
+        <property name="transactionService" ref="transactionService"/>
+		<property name="avatarGenerator" ref="de.fmaul.avatarGenerator"/>
+	</bean>
+
+	<bean id="de.fmaul.default.user.avatar.behaviour" class="de.fmaul.alfresco.avatars.DefaultPersonAvatarBehaviour" init-method="init">
+		<property name="policyComponent" ref="policyComponent"/>
+		<property name="nodeService" ref="nodeService"/>
+		<property name="avatarService" ref="de.fmaul.avatarService"/>
+	</bean>
+	
+	<bean id="de.fmaul.patch.updateMissingUserAvatarsPatch"
+		class="de.fmaul.alfresco.avatars.UpdateMissingUserAvatarsPatch"
+		parent="basePatch">
+		<property name="id">
+			<value>patch.updateMissingUserAvatarsPatch</value>
+		</property>
+		<property name="description">
+			<value>Creates default avatar images for all users who currently have now avatar images defined.</value>
+		</property>
+		<property name="fixesFromSchema">
+			<value>0</value>
+		</property>
+		<property name="fixesToSchema">
+			<value>${version.schema}</value>
+		</property>
+		<property name="targetSchema">
+			<value>99999</value>
+		</property>
+		<property name="avatarService" ref="de.fmaul.avatarService" />
+	</bean>	
+	
+</beans>
